@@ -9,10 +9,31 @@ namespace Akka.Tdd.Core
     {
         public ActorSystem ActorSystem { get; set; }
 
-        public void Register(IAkkaDependencyResolver resolver, ActorSystem actorSystem = null)
+        [Obsolete("please use the method 'RegisterAndCreateActorSystem()' instead")]
+        public void Register(IAkkaDependencyResolver resolver)
+        {
+            RegisterAndCreateActorSystem(resolver, null, null);
+        }
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver)
+        {
+            RegisterAndCreateActorSystem(resolver, null, null);
+        }
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, string actorSystemName)
+        {
+            if (actorSystemName == null) throw new ArgumentNullException(nameof(actorSystemName));
+            RegisterAndCreateActorSystem(resolver, null, actorSystemName);
+        }
+
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem )
+        {
+            if (actorSystem == null) throw new ArgumentNullException(nameof(actorSystem));
+            RegisterAndCreateActorSystem(resolver, actorSystem, null);
+        }
+
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem ,string systemName)
         {
             if (resolver == null) throw new ArgumentNullException(nameof(resolver));
-            var actorSystemName = typeof(ApplicationActorSystem).Name;
+            var actorSystemName = string.IsNullOrEmpty(systemName)? typeof(ApplicationActorSystem).Name:systemName;
             ActorSystem = actorSystem ?? Akka.Actor.ActorSystem.Create(actorSystemName);
             if (resolver.TypeRegistrer == null) return;
             IterateThroughAllActorsInCurrentAppDomain(resolver.TypeRegistrer);

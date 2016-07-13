@@ -99,20 +99,22 @@ namespace Akka.Tdd.Core
             {
                 return null;
             }
-            var section = (AkkaConfigurationSection)ConfigurationManager.GetSection("akka");
-            if (section?.AkkaConfig?.GetConfig("akka.actor.deployment") != null)
+            var hasSetRouter = false;
+            try
             {
-                props = props.WithRouter(FromConfig.Instance);
-            }
-            else
-            {
-                if (options?.RouterConfig != null)
+                var section = (AkkaConfigurationSection)ConfigurationManager.GetSection("akka");
+                if (section?.AkkaConfig?.GetConfig("akka.actor.deployment") != null)
                 {
-                    props = props.WithRouter(options.RouterConfig);
+                    props = props.WithRouter(FromConfig.Instance);
+                    hasSetRouter = true;
                 }
             }
+            catch (Exception e)
+            {
+            }
+
             if (options == null) return props;
-            if (options.RouterConfig != null)
+            if (options.RouterConfig != null && !hasSetRouter)
             {
                 props = props.WithRouter(options.RouterConfig);
             }
