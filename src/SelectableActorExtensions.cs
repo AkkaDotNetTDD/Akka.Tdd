@@ -82,6 +82,7 @@ namespace Akka.Tdd.Core
         {
             var props = system.DI().Props(selectableActor.Actortype);
             props =  selectableActor.PrepareProps(options, props, selectableActor.ActorName) ?? Props.Create(selectableActor.Actortype);
+            props = MapOptions(options, props);
             return system.ActorOf(props, selectableActor.ActorName);
         }
 
@@ -89,7 +90,7 @@ namespace Akka.Tdd.Core
         {
             var props = actorContext.DI().Props(selectableActor.Actortype);
             props = selectableActor.PrepareProps(options, props, selectableActor.ActorName) ?? Props.Create(selectableActor.Actortype);
-
+            props= MapOptions(options, props);
             var actorRef = actorContext.ActorOf(props, name: selectableActor.ActorName);
 
             return actorRef;
@@ -109,6 +110,13 @@ namespace Akka.Tdd.Core
             {
                 return null;
             }
+           
+            return props;
+        }
+
+        private static Props MapOptions(ActorSetUpOptions options, Props props)
+        {
+            
             if (options == null) return props;
             if (options.RouterConfig != null)
             {
