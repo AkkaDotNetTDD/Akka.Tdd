@@ -8,34 +8,84 @@ namespace Akka.Tdd.Core
     public class ApplicationActorSystem : IDisposable
     {
         public ActorSystem ActorSystem { get; set; }
-
         [Obsolete("please use the method 'RegisterAndCreateActorSystem()' instead")]
         public void Register(IAkkaDependencyResolver resolver)
         {
             RegisterAndCreateActorSystem(resolver, null, null);
         }
-        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver)
+        public ApplicationActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem,
+            string systemName)
+        {
+            RegisterAndCreateActorSystem(resolver, actorSystem, systemName);
+        }
+
+        public ApplicationActorSystem(IAkkaDependencyResolver resolver)
         {
             RegisterAndCreateActorSystem(resolver, null, null);
         }
-        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, string actorSystemName)
+        public ApplicationActorSystem(IAkkaDependencyResolver resolver, string actorSystemName)
         {
             if (actorSystemName == null) throw new ArgumentNullException(nameof(actorSystemName));
             RegisterAndCreateActorSystem(resolver, null, actorSystemName);
         }
 
-        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem )
+        public ApplicationActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem)
         {
             if (actorSystem == null) throw new ArgumentNullException(nameof(actorSystem));
             RegisterAndCreateActorSystem(resolver, actorSystem, null);
         }
 
-        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem ,string systemName)
+        public ApplicationActorSystem(string actorSystemName)
         {
-            if (resolver == null) throw new ArgumentNullException(nameof(resolver));
-            var actorSystemName = string.IsNullOrEmpty(systemName)? typeof(ApplicationActorSystem).Name:systemName;
+            RegisterAndCreateActorSystem(null, null, actorSystemName);
+        }
+        public ApplicationActorSystem()
+        {
+            RegisterAndCreateActorSystem(null, null, null);
+        }
+
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver)
+        {
+            RegisterAndCreateActorSystem(resolver, null, null);
+        }
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, string actorSystemName)
+        {
+            if (actorSystemName == null) throw new ArgumentNullException(nameof(actorSystemName));
+            RegisterAndCreateActorSystem(resolver, null, actorSystemName);
+        }
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem)
+        {
+            if (actorSystem == null) throw new ArgumentNullException(nameof(actorSystem));
+            RegisterAndCreateActorSystem(resolver, actorSystem, null);
+        }
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem(string actorSystemName)
+        {
+            RegisterAndCreateActorSystem(null, null, actorSystemName);
+        }
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem()
+        {
+            RegisterAndCreateActorSystem(null, null, null);
+        }
+        [Obsolete("please instantiate using the constructor ApplicationActorSystem() instead")]
+        public void RegisterAndCreateActorSystem(IAkkaDependencyResolver resolver, ActorSystem actorSystem, string systemName)
+        {
+            if (ActorSystem != null)
+                return;
+
+
+            var actorSystemName = string.IsNullOrEmpty(systemName) ? typeof(ApplicationActorSystem).Name : systemName;
             ActorSystem = actorSystem ?? Akka.Actor.ActorSystem.Create(actorSystemName);
-            if (resolver.TypeRegistrer == null) return;
+
+            if (resolver?.TypeRegistrer == null)
+            {
+                throw new Exception("Please provide a resolver");
+            }
+
             IterateThroughAllActorsInCurrentAppDomain(resolver.TypeRegistrer);
             resolver.TypeIterationCompleted?.Invoke(ActorSystem);
         }

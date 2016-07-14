@@ -4,6 +4,7 @@ using Akka.DI.Core;
 using Akka.Routing;
 using System;
 using System.Configuration;
+using System.Linq;
 
 namespace Akka.Tdd.Core
 {
@@ -80,41 +81,36 @@ namespace Akka.Tdd.Core
         public static IActorRef Create(this ISelectableActor selectableActor, ActorSystem system, ActorSetUpOptions options = null)
         {
             var props = system.DI().Props(selectableActor.Actortype);
-            props = selectableActor.PrepareProps(options, props);
+            props =  selectableActor.PrepareProps(options, props, selectableActor.ActorName) ?? Props.Create(selectableActor.Actortype);
             return system.ActorOf(props, selectableActor.ActorName);
         }
 
         public static IActorRef Create(this ISelectableActor selectableActor, IActorContext actorContext, ActorSetUpOptions options = null)
         {
             var props = actorContext.DI().Props(selectableActor.Actortype);
-            props = selectableActor.PrepareProps(options, props);
+            props = selectableActor.PrepareProps(options, props, selectableActor.ActorName) ?? Props.Create(selectableActor.Actortype);
+
             var actorRef = actorContext.ActorOf(props, name: selectableActor.ActorName);
 
             return actorRef;
         }
 
-        public static Props PrepareProps(this ISelectableActor selectableActor, ActorSetUpOptions options, Props props = null)
+        public static Props PrepareProps(this ISelectableActor selectableActor, ActorSetUpOptions options, Props props = null, string actorName = null)
         {
-            if (props == null)
+            if (((props == null)) || ((AkkaConfigurationSection)ConfigurationManager
+                .GetSection("akka"))?
+                .AkkaConfig?
+                .GetConfig("akka.actor.deployment")?
+                .Root?
+                .Values?
+                .FirstOrDefault(x => (x as HoconObject)?
+                .Items?
+                .FirstOrDefault(xy => xy.Key == "/" + actorName) != null) != null)
             {
                 return null;
             }
-            var hasSetRouter = false;
-            try
-            {
-                var section = (AkkaConfigurationSection)ConfigurationManager.GetSection("akka");
-                if (section?.AkkaConfig?.GetConfig("akka.actor.deployment") != null)
-                {
-                    props = props.WithRouter(FromConfig.Instance);
-                    hasSetRouter = true;
-                }
-            }
-            catch (Exception e)
-            {
-            }
-
             if (options == null) return props;
-            if (options.RouterConfig != null && !hasSetRouter)
+            if (options.RouterConfig != null)
             {
                 props = props.WithRouter(options.RouterConfig);
             }
@@ -132,6 +128,7 @@ namespace Akka.Tdd.Core
             }
             return props;
         }
+
 
         public static string GetActorName(this ISelectableActor selectableActor)
         {
